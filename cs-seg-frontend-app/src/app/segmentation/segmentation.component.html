@@ -1,0 +1,34 @@
+<p-toolbar>
+  <ng-template #start>
+    <p-fileupload
+      #fileUpload
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="image/*"
+      (onSelect)="onFileSelected($event)"
+      chooseLabel="Upload Image"
+      [auto]="true"
+      [multiple]="false"
+    />
+  </ng-template>
+  <ng-template #center> </ng-template>
+  <ng-template #end>
+    <p-button label="Export JSON" />
+  </ng-template>
+</p-toolbar>
+<div class="h-full w-full flex justify-center items-center">
+  @if (imageUrl1 && imageUrl2) {
+    <div class="card flex items-center h-[720px] aspect-[2/1]">
+      <p-imagecompare class="shadow-lg rounded-2xl">
+        <ng-template #right>
+          <img [src]="imageUrl1" alt="Image" />
+        </ng-template>
+        <ng-template #left>
+          <img [src]="imageUrl2" alt="Image" />
+        </ng-template>
+      </p-imagecompare>
+    </div>
+  } @else {
+    <p>No image selected</p>
+  }
+</div>
