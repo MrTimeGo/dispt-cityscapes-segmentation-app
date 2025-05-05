@@ -3,12 +3,21 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { FileSelectEvent, FileUploadModule } from 'primeng/fileupload';
 import { ButtonModule } from 'primeng/button';
 import { SegmentationService } from './segmentation.service';
-import { SegmentedImage } from './shared/models/polygons';
+import { Polygon, SegmentedImage } from './shared/models/polygons';
 import { ImageCompareModule } from 'primeng/imagecompare';
+import { MultiSelectChangeEvent, MultiSelectModule } from 'primeng/multiselect';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-segmentation',
-  imports: [ToolbarModule, FileUploadModule, ButtonModule, ImageCompareModule],
+  imports: [
+    ToolbarModule,
+    FileUploadModule,
+    ButtonModule,
+    ImageCompareModule,
+    MultiSelectModule,
+    FormsModule,
+  ],
   templateUrl: './segmentation.component.html',
   styleUrl: './segmentation.component.css',
 })
@@ -18,6 +27,10 @@ export class SegmentationComponent {
   image: File | null = null;
   imageUrl1: string | null = null;
   imageUrl2: string | null = null;
+  polygon!: SegmentedImage;
+  filteredPolygon!: SegmentedImage;
+  selectedLayers!: string[];
+  layers: string[] = [];
 
   colors = {
     road: '#808080', // gray
@@ -45,6 +58,10 @@ export class SegmentationComponent {
     if (this.image) {
       this.imageUrl1 = URL.createObjectURL(this.image);
       this.segmentationService.uploadImage(this.image).subscribe((polygons) => {
+        this.layers = [...new Set(polygons.objects.map((p) => p.label))];
+        this.selectedLayers = [...this.layers];
+        this.polygon = { ...polygons };
+        this.filteredPolygon = { ...polygons };
         this.drawPolygons(polygons);
       });
     }
@@ -81,6 +98,16 @@ export class SegmentationComponent {
 
     this.imageUrl2 = canvas.toDataURL();
     canvas.remove();
+  }
+
+  onChange() {
+    const objects = this.polygon.objects.filter((obj) =>
+      this.selectedLayers.includes(obj.label),
+    );
+
+    this.filteredPolygon.objects = [...objects];
+
+    this.drawPolygons(this.filteredPolygon);
   }
 
   // Clean up the object URL when component is destroyed
