@@ -11,7 +11,19 @@
       [multiple]="false"
     />
   </ng-template>
-  <ng-template #center> </ng-template>
+  <ng-template #center>
+    @if (layers.length) {
+      <p-multiselect
+        [options]="layers"
+        [(ngModel)]="selectedLayers"
+        placeholder="Select Layers"
+        [maxSelectedLabels]="3"
+        styleClass="w-full md:w-80"
+        appendTo="body"
+        (onChange)="onChange()"
+      />
+    }
+  </ng-template>
   <ng-template #end>
     <p-button label="Export JSON" />
   </ng-template>
