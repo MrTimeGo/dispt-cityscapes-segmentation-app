@@ -450,3 +450,6 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/angular,node,visualstudiocode,python,pycharm+all,dotenv
+
+/leftImg8bit_trainvaltest
+/gtFine_trainvaltest
