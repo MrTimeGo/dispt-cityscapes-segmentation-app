@@ -1,5 +1,10 @@
-from flask import Blueprint, request, jsonify
+import io
+import numpy as np
+
+from flask import Blueprint, request, jsonify, send_file
 from PIL import Image
+
+from .model.evaluate import evaluate
 
 img = Blueprint('images', __name__)
 
@@ -18,25 +23,17 @@ def process_image():
 
     print("Received image file:", image_file.filename)
 
-    # TODO: invoke the segmentation model here
+    SIZE = 160
 
-    mock_response = {
-        "imgHeight": width,
-        "imgWidth": height,
-        "objects": [
-            {
-                "label": "road",
-                "polygon": [
-                    [0, 769],
-                    [1, 290],
-                    [574, 93],
-                    [528, 1],
-                    [0, 524],
-                    [1, 0],
-                    [448, 0]
-                ]
-            }
-        ]
-    }
+    skip_labels = request.args.getlist('skip_labels')
 
-    return jsonify(mock_response)
+    if width < SIZE or height < SIZE:
+        return jsonify({"error": "Invalid image size. Width and height should be more than 160"}), 400
+
+    output = evaluate(np.array(image), skip_labels)
+    return send_file(
+        io.BytesIO(output),
+        mimetype='image/png',
+        as_attachment=True,
+        download_name=f"{image_file.name}_segmented.png",
+    )

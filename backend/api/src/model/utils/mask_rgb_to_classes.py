@@ -64,12 +64,17 @@ def masks_rgb_to_classes(masks: np.ndarray) -> np.ndarray:
     return output
 
 
-def masks_classes_to_rgb(class_array):
+def masks_classes_to_rgb(class_array, skip_labels):
     n, w, h, n_classes = class_array.shape
     # Step 1: Convert one-hot vectors to class indices
     class_indices = np.argmax(class_array, axis=-1)  # shape (n, w, h)
 
     colormap = np.array([label.color for label in labels])
+
+    labels_to_show = []
+    for idx, label in enumerate(labels):
+        if label.class_name in skip_labels:
+            colormap[idx] = np.array([0,0,0])
 
     output = colormap[class_indices]
 

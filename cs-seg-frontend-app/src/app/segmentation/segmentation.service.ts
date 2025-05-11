@@ -8,9 +8,11 @@ import { SegmentedImage } from './shared/models/polygons';
 export class SegmentationService {
   private readonly http = inject(HttpClient);
 
-  uploadImage(file: File) {
+  baseUrl = 'http://localhost:5000/';
+
+  uploadImage(file: File, skip_labels: string[]) {
     // do magic upload, get polygons json
 
-    return this.http.get<SegmentedImage>('./polygons.json');
+    return this.http.get<SegmentedImage>(`${this.baseUrl}/images?`);
   }
 }
