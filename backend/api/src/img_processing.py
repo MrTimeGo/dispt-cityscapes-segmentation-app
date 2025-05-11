@@ -10,6 +10,9 @@ img = Blueprint('images', __name__)
 
 @img.route("/images", methods=['POST'])
 def process_image():
+    print("Files in request:", request.files)
+    print("Content-Type:", request.headers.get('Content-Type'))
+    
     if 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
 

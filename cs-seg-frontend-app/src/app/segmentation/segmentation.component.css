@@ -1,4 +1,3 @@
-:host {
-  display: block;
-  height: 100%;
+.hfull {
+  height: calc(100vh - 100px);
 }

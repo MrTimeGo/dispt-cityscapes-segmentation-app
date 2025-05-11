@@ -3,7 +3,6 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { FileSelectEvent, FileUploadModule } from 'primeng/fileupload';
 import { ButtonModule } from 'primeng/button';
 import { SegmentationService } from './segmentation.service';
-import { Polygon, SegmentedImage } from './shared/models/polygons';
 import { ImageCompareModule } from 'primeng/imagecompare';
 import { MultiSelectChangeEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FormsModule } from '@angular/forms';
@@ -27,29 +26,24 @@ export class SegmentationComponent {
   image: File | null = null;
   imageUrl1: string | null = null;
   imageUrl2: string | null = null;
-  polygon!: SegmentedImage;
-  filteredPolygon!: SegmentedImage;
-  selectedLayers!: string[];
-  layers: string[] = [];
 
-  colors = {
-    road: '#808080', // gray
-    sidewalk: '#C0C0C0', // light gray
-    sky: '#87CEEB', // sky blue
-    car: '#1E90FF', // dodger blue
-    terrain: '#8B4513', // saddle brown
-    building: '#CD853F', // peru (brownish)
-    vegetation: '#228B22', // forest green
-    pole: '#4A4A4A', // dark gray
-    'traffic sign': '#FFD700', // gold
-    static: '#000000', // black
-    bicycle: '#B8860B', // dark goldenrod
-    person: '#FF69B4', // hot pink
-    'license plate': '#FFFFFF', // white
-    rider: '#9370DB', // medium purple
-    'ego vehicle': '#4682B4', // steel blue
-    'out of roi': '#2F4F4F', // dark slate gray
-  };
+  allLabels: string[] = [
+    'road',
+    'sidewalk',
+    'person',
+    'car',
+    'truck',
+    'bus',
+    'motorcycle',
+    'bicycle',
+    'building',
+    'vegetation',
+    'terrain',
+    'sky',
+    'parking',
+  ];
+
+  selectedLabels = [...this.allLabels];
 
   onFileSelected(event: FileSelectEvent) {
     console.log('onFileSelected', event);
@@ -57,57 +51,38 @@ export class SegmentationComponent {
     // Create a URL for the selected image file
     if (this.image) {
       this.imageUrl1 = URL.createObjectURL(this.image);
-      this.segmentationService.uploadImage(this.image).subscribe((polygons) => {
-        this.layers = [...new Set(polygons.objects.map((p) => p.label))];
-        this.selectedLayers = [...this.layers];
-        this.polygon = { ...polygons };
-        this.filteredPolygon = { ...polygons };
-        this.drawPolygons(polygons);
-      });
+
+      // difference between selectedLabels and allLabels
+      const skipLabels = this.allLabels.filter(
+        (label) => !this.selectedLabels.includes(label),
+      );
+
+      this.segmentationService
+        .uploadImage(this.image, skipLabels)
+        .subscribe((img) => {
+          this.imageUrl2 = URL.createObjectURL(img);
+        });
     }
-  }
-
-  private drawPolygons(image: SegmentedImage) {
-    const canvas = document.createElement('canvas');
-    canvas.width = image.imgWidth;
-    canvas.height = image.imgHeight;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      return;
-    }
-
-    for (let i = 0; i < image.objects.length; i++) {
-      const object = image.objects[i];
-      const color = this.colors[object.label as keyof typeof this.colors];
-
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-
-      ctx.beginPath();
-
-      for (const point of object.polygon) {
-        ctx.lineTo(point[0], point[1]);
-      }
-
-      ctx.lineTo(object.polygon[0][0], object.polygon[0][1]);
-
-      ctx.stroke();
-      ctx.fill();
-    }
-
-    this.imageUrl2 = canvas.toDataURL();
-    canvas.remove();
   }
 
   onChange() {
-    const objects = this.polygon.objects.filter((obj) =>
-      this.selectedLayers.includes(obj.label),
+    const skipLabels = this.allLabels.filter(
+      (label) => !this.selectedLabels.includes(label),
     );
 
-    this.filteredPolygon.objects = [...objects];
+    this.segmentationService
+      .uploadImage(this.image!, skipLabels)
+      .subscribe((img) => {
+        this.imageUrl2 = URL.createObjectURL(img);
+      });
+  }
 
-    this.drawPolygons(this.filteredPolygon);
+  onExportSegmentation() {
+    // download the imageUrl2
+    const a = document.createElement('a');
+    a.href = this.imageUrl2!;
+    a.download = `${this.image!.name}-segmentation.png`;
+    a.click();
   }
 
   // Clean up the object URL when component is destroyed

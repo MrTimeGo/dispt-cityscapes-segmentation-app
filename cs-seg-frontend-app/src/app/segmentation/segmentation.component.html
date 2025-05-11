@@ -1,46 +1,52 @@
-<p-toolbar>
-  <ng-template #start>
-    <p-fileupload
-      #fileUpload
-      mode="basic"
-      chooseIcon="pi pi-upload"
-      accept="image/*"
-      (onSelect)="onFileSelected($event)"
-      chooseLabel="Upload Image"
-      [auto]="true"
-      [multiple]="false"
-    />
-  </ng-template>
-  <ng-template #center>
-    @if (layers.length) {
-      <p-multiselect
-        [options]="layers"
-        [(ngModel)]="selectedLayers"
-        placeholder="Select Layers"
-        [maxSelectedLabels]="3"
-        styleClass="w-full md:w-80"
-        appendTo="body"
-        (onChange)="onChange()"
+<div class="flex flex-col hfull">
+  <p-toolbar>
+    <ng-template #start>
+      <p-fileupload
+        #fileUpload
+        mode="basic"
+        chooseIcon="pi pi-upload"
+        accept="image/*"
+        (onSelect)="onFileSelected($event)"
+        chooseLabel="Upload Image"
+        [auto]="true"
+        [multiple]="false"
       />
+    </ng-template>
+    <ng-template #center>
+      @if (image) {
+        <p-multiselect
+          [options]="allLabels"
+          [(ngModel)]="selectedLabels"
+          placeholder="Select Labels"
+          styleClass="w-full md:w-80"
+          appendTo="body"
+          (onChange)="onChange()"
+        />
+      }
+    </ng-template>
+    <ng-template #end>
+      @if (imageUrl2) {
+        <p-button
+          label="Export segmentation"
+          (onClick)="onExportSegmentation()"
+        />
+      }
+    </ng-template>
+  </p-toolbar>
+  <div class="flex-1 w-full flex justify-center items-center">
+    @if (imageUrl1 && imageUrl2) {
+      <div class="card flex items-center h-[720px] aspect-[2/1]">
+        <p-imagecompare class="shadow-lg rounded-2xl">
+          <ng-template #right>
+            <img [src]="imageUrl1" alt="Image" />
+          </ng-template>
+          <ng-template #left>
+            <img [src]="imageUrl2" alt="Image" />
+          </ng-template>
+        </p-imagecompare>
+      </div>
+    } @else {
+      <p>No image selected</p>
     }
-  </ng-template>
-  <ng-template #end>
-    <p-button label="Export JSON" />
-  </ng-template>
-</p-toolbar>
-<div class="h-full w-full flex justify-center items-center">
-  @if (imageUrl1 && imageUrl2) {
-    <div class="card flex items-center h-[720px] aspect-[2/1]">
-      <p-imagecompare class="shadow-lg rounded-2xl">
-        <ng-template #right>
-          <img [src]="imageUrl1" alt="Image" />
-        </ng-template>
-        <ng-template #left>
-          <img [src]="imageUrl2" alt="Image" />
-        </ng-template>
-      </p-imagecompare>
-    </div>
-  } @else {
-    <p>No image selected</p>
-  }
+  </div>
 </div>
