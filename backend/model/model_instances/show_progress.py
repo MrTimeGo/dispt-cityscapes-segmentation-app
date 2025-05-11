@@ -15,9 +15,9 @@ class ShowProgress(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         id = np.random.randint(len(self.X_test))
-        rand_img = self.X_test[id][np.newaxis, ...] # (1, w, h, 3)
+        rand_img = self.X_test[np.newaxis, ...] # (1, w, h, 3)
         pred_mask = self.model.predict(rand_img)[0]  # (w, h, N-class)
-        true_mask = self.Y_test[id] # (w, h, 3)
+        true_mask = self.Y_test # (w, h, 3)
 
         pred_mask = masks_classes_to_rgb(np.array([pred_mask]))[0] # (w, h, 3)
 
@@ -37,4 +37,6 @@ class ShowProgress(keras.callbacks.Callback):
         plt.axis('off')
 
         plt.tight_layout()
-        plt.show()
+
+        plt.savefig("../outputs/epoch_progress.png")
+        #plt.show()

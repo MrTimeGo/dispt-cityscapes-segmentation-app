@@ -1,3 +1,5 @@
+import pickle
+
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -10,14 +12,18 @@ from .utils.image_reader import read_x_train, read_y_train, read_x_test, read_y_
 from .utils.mask_rgb_to_classes import masks_rgb_to_classes, labels, masks_classes_to_rgb
 from .model_instances.u_net_a import create_model_and_compile
 
-SIZE = 256
+SIZE = 160
 DUMP_FOLDER_NAME = '../image-loaded-checkpoints'
 
-if os.path.exists(f'{DUMP_FOLDER_NAME}/X_train.npy'):
-    X_train = np.load(f'{DUMP_FOLDER_NAME}/X_train.npy', allow_pickle=True)
-    Y_train = np.load(f'{DUMP_FOLDER_NAME}/Y_train.npy', allow_pickle=True)
-    X_test = np.load(f'{DUMP_FOLDER_NAME}/X_test.npy', allow_pickle=True)
-    Y_test = np.load(f'{DUMP_FOLDER_NAME}/Y_test.npy', allow_pickle=True)
+if os.path.exists(f'{DUMP_FOLDER_NAME}/X_train.pkl'):
+    with open(f'{DUMP_FOLDER_NAME}/X_train.pkl', 'rb') as f:
+        X_train = pickle.load(f)
+    with open(f'{DUMP_FOLDER_NAME}/Y_train.pkl', 'rb') as f:
+        Y_train = pickle.load(f)
+    with open(f'{DUMP_FOLDER_NAME}/X_test.pkl', 'rb') as f:
+        X_test= pickle.load(f)
+    with open(f'{DUMP_FOLDER_NAME}/Y_test.pkl', 'rb') as f:
+        Y_test = pickle.load(f)
     print('loaded')
 else:
     X_train, Y_train = read_x_train(SIZE, SIZE), read_y_train(SIZE, SIZE)
@@ -26,30 +32,41 @@ else:
 
     if not os.path.isdir(DUMP_FOLDER_NAME):
         os.mkdir(DUMP_FOLDER_NAME)
-
-    X_train.dump(f'{DUMP_FOLDER_NAME}/X_train.npy')
-    Y_train.dump(f'{DUMP_FOLDER_NAME}/Y_train.npy')
-    X_test.dump(f'{DUMP_FOLDER_NAME}/X_test.npy')
-    Y_test.dump(f'{DUMP_FOLDER_NAME}/Y_test.npy')
+    with open(f'{DUMP_FOLDER_NAME}/X_train.pkl', 'wb') as f:
+        pickle.dump(X_train, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(f'{DUMP_FOLDER_NAME}/Y_train.pkl', 'wb') as f:
+        pickle.dump(Y_train, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(f'{DUMP_FOLDER_NAME}/X_test.pkl', 'wb') as f:
+        pickle.dump(X_test, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(f'{DUMP_FOLDER_NAME}/Y_test.pkl', 'wb') as f:
+        pickle.dump(Y_test, f, protocol=pickle.HIGHEST_PROTOCOL)
     print('saved')
 
 
 X_train = X_train / 255.0
 X_test = X_test / 255.0
 
-if os.path.exists(f'{DUMP_FOLDER_NAME}/Y_train_one_hot.npy'):
-    Y_train_one_hot = np.load(f'{DUMP_FOLDER_NAME}/Y_train_one_hot.npy')
-    Y_test_one_hot = np.load(f'{DUMP_FOLDER_NAME}/Y_test_one_hot.npy')
+if os.path.exists(f'{DUMP_FOLDER_NAME}/Y_train_one_hot.pkl'):
+    with open(f'{DUMP_FOLDER_NAME}/Y_train_one_hot.pkl', 'rb') as f:
+        Y_train_one_hot = pickle.load(f)
+    with open(f'{DUMP_FOLDER_NAME}/Y_test_one_hot.pkl', 'rb') as f:
+        Y_test_one_hot = pickle.load(f)
+    print('loaded one hot')
 else:
     Y_train_one_hot = masks_rgb_to_classes(Y_train)
     Y_test_one_hot = masks_rgb_to_classes(Y_test)
+    print('saving one hot')
+    with open(f'{DUMP_FOLDER_NAME}/Y_train_one_hot.pkl', 'wb') as f:
+        pickle.dump(Y_train_one_hot, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(f'{DUMP_FOLDER_NAME}/Y_test_one_hot.pkl', 'wb') as f:
+        pickle.dump(Y_test_one_hot, f, protocol=pickle.HIGHEST_PROTOCOL)
+    print('saved one hot')
 
-    Y_train_one_hot.dump(f'{DUMP_FOLDER_NAME}/Y_train_one_hot.npy')
-    Y_test_one_hot.dump(f'{DUMP_FOLDER_NAME}/Y_test_one_hot.npy')
+# print(Y_train_one_hot.shape)
+# print(masks_classes_to_rgb(Y_train_one_hot).shape)
 
 plt.figure()
 plt.subplot(1, 3, 1)
-print(X_train[0].shape)
 plt.imshow(X_train[0])
 plt.subplot(1, 3, 2)
 plt.imshow(Y_train[0] / 255)
@@ -57,6 +74,8 @@ plt.subplot(1, 3, 3)
 plt.imshow(masks_classes_to_rgb(np.array([Y_train_one_hot[0]]))[0] / 255)
 plt.show()
 
+test_sample_x = X_test[0]
+test_sample_y = Y_test[0]
 
 with tf.device('/device:GPU:0'):
     model = create_model_and_compile(SIZE, SIZE, len(labels))
@@ -64,7 +83,7 @@ with tf.device('/device:GPU:0'):
     callbacks = [
         EarlyStopping(patience=5, restore_best_weights=True),
         ModelCheckpoint("../cs-checkpoint.h5", save_best_only=True),
-        ShowProgress(X_test, Y_test)
+        ShowProgress(test_sample_x, test_sample_y)
     ]
 
     # Train The Model

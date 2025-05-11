@@ -5,6 +5,7 @@ import numpy as np
 from .label import Label
 
 labels = np.array([
+    Label('void', np.array([0, 0, 0])),
     Label('road', np.array([128, 64, 128])),
     Label('sidewalk', np.array([244, 35, 232])),
     Label('person', np.array([220, 20, 60])),
@@ -27,7 +28,6 @@ labels = np.array([
     Label('rail track', np.array([81, 0, 81])),
     Label('parking', np.array([250, 170, 160])),
     Label('other', np.array([111, 74, 0])),
-    Label('void', np.array([0, 0, 0])),
     Label('unknown1', np.array([0, 0, 110])),
     Label('unknown2', np.array([180, 165, 180])),
     Label('unknown3', np.array([150, 100, 100])),
@@ -66,7 +66,6 @@ def masks_rgb_to_classes(masks: np.ndarray) -> np.ndarray:
 
 def masks_classes_to_rgb(class_array):
     n, w, h, n_classes = class_array.shape
-    output = np.zeros((n, w, h, 3), dtype=np.uint8)
     # Step 1: Convert one-hot vectors to class indices
     class_indices = np.argmax(class_array, axis=-1)  # shape (n, w, h)
 

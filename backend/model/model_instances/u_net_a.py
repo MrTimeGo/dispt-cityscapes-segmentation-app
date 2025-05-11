@@ -1,6 +1,7 @@
 import keras
 
 from keras.layers import Conv2D, Conv2DTranspose, InputLayer, Layer, Input, Dropout, MaxPool2D, concatenate
+from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
@@ -14,14 +15,19 @@ class EncoderLayerBlock(Layer):
     self.pooling = pooling
 
     self.c1 = Conv2D(self.filters, kernel_size=3, padding='same', activation='relu', kernel_initializer='he_normal')
+    #self.bn1 = BatchNormalization()
     self.drop = Dropout(self.rate)
     self.c2 = Conv2D(self.filters, kernel_size=3, padding='same', activation='relu', kernel_initializer='he_normal')
+    #self.bn2 = BatchNormalization()
     self.pool = MaxPool2D(pool_size=(2,2))
 
   def call(self, X):
     x = self.c1(X)
+    #x = self.bn1(x)
     x = self.drop(x)
     x = self.c2(x)
+    #x = self.bn2(x)
+
     if self.pooling:
       y = self.pool(x)
       return y, x
@@ -44,11 +50,13 @@ class DecoderLayerBlock(Layer):
     self.filters = filters
     self.rate = rate
     self.cT = Conv2DTranspose(self.filters, kernel_size=3, strides=2, padding=padding)
+    #self.bnT = BatchNormalization()
     self.next = EncoderLayerBlock(self.filters, self.rate, pooling=False)
 
   def call(self, X):
     X, skip_X = X
     x = self.cT(X)
+    #x = self.bnT(x)
     c1 = concatenate([x, skip_X])
     y = self.next(c1)
     return y
@@ -82,7 +90,7 @@ def create_model_and_compile(input_width, input_height, n_classes):
     d4 = DecoderLayerBlock(16, 0.2)([d3, c1])
 
     # Output layer
-    output = Conv2D(n_classes, kernel_size=1, strides=1, padding='same', activation='sigmoid')(d4)
+    output = Conv2D(n_classes, kernel_size=1, strides=1, padding='same', activation='softmax')(d4)
 
     # U-Net Model
     model = keras.models.Model(
@@ -91,9 +99,9 @@ def create_model_and_compile(input_width, input_height, n_classes):
     )
 
     model.compile(
-        loss='binary_crossentropy',
+        loss='categorical_crossentropy',
         optimizer=Adam(learning_rate=0.001),
-        metrics=['accuracy', keras.metrics.MeanIoU(num_classes=2)]
+        metrics=['accuracy', keras.metrics.MeanIoU(num_classes=n_classes)]
     )
 
     return model
